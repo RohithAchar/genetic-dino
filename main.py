@@ -51,7 +51,7 @@ class Dinosaur:
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS
 
-    def update(self, userInput):
+    def update(self, userInput, isJump):
         if self.dino_duck:
             self.duck()
         if self.dino_run:
@@ -62,6 +62,11 @@ class Dinosaur:
         if self.step_index >= 10:
             self.step_index = 0
 
+        if isJump and not self.dino_jump:
+            self.dino_duck = False
+            self.dino_run = False
+            self.dino_jump = True
+            
         if userInput[pygame.K_UP] and not self.dino_jump:
             self.dino_duck = False
             self.dino_run = False
@@ -134,6 +139,9 @@ class Obstacle:
     def draw(self, SCREEN):
         SCREEN.blit(self.image[self.type], self.rect)
 
+    def distance(self):
+        return self.rect.x
+
 
 class SmallCactus(Obstacle):
     def __init__(self, image):
@@ -176,6 +184,7 @@ def main():
     font = pygame.font.Font('freesansbold.ttf', 20)
     obstacles = []
     death_count = 0
+    is_jump = False
 
     def score():
         global points, game_speed
@@ -207,7 +216,7 @@ def main():
         userInput = pygame.key.get_pressed()
 
         player.draw(SCREEN)
-        player.update(userInput)
+        player.update(userInput, is_jump)
 
         if len(obstacles) == 0:
             if random.randint(0, 2) == 0:
@@ -217,9 +226,14 @@ def main():
             elif random.randint(0, 2) == 2:
                 obstacles.append(Bird(BIRD))
 
+        is_jump = False
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
+            distance_diff = obstacle.distance() - 160
+
+            if 200 <= distance_diff <= 240:
+                is_jump = True
             if player.dino_rect.colliderect(obstacle.rect):
                 pygame.time.delay(2000)
                 death_count += 1
@@ -251,6 +265,7 @@ def menu(death_count):
             scoreRect = score.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
             SCREEN.blit(score, scoreRect)
+        
         textRect = text.get_rect()
         textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         SCREEN.blit(text, textRect)
